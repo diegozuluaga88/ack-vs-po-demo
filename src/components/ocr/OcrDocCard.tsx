@@ -1,4 +1,4 @@
-import { FileText, AlertCircle, CheckCircle2, CheckSquare, Send, Trash2, ArrowLeftRight } from 'lucide-react'
+import { FileText, AlertCircle, CheckCircle2, Send, Trash2, ArrowLeftRight } from 'lucide-react'
 import { getTeamMember, avatarGradient } from '../team/teamMembers'
 import DocTypeChip from './DocTypeChip'
 
@@ -21,7 +21,8 @@ export interface OcrDocCardData {
 interface OcrDocCardProps {
     doc: OcrDocCardData
     onPreview: () => void
-    onMarkCompleted: () => void
+    // DE1.12 · Diego 2026-09-02 · onMarkCompleted removido · el botón
+    // "Mark as Completed" no existe en gostrata.app premain.
     onPreflightSync: () => void
     onDeprecate: () => void
     /** FB-06b · multi-select state · si onToggleSelect provisto, checkbox aparece. */
@@ -51,7 +52,7 @@ function formatRelativeTime(input: string): string {
     return input
 }
 
-export default function OcrDocCard({ doc, onPreview, onMarkCompleted, onPreflightSync, onDeprecate, selected, onToggleSelect, onCompareLinked }: OcrDocCardProps) {
+export default function OcrDocCard({ doc, onPreview, onPreflightSync, onDeprecate, selected, onToggleSelect, onCompareLinked }: OcrDocCardProps) {
     const assignee = getTeamMember(doc.assigneeId)
     // For non-Reconciled/Completed states the 4 icons default to In-Progress mapping
     // (per Diego decision 2026-06-09 — confirm with prod for other states later).
@@ -164,24 +165,9 @@ export default function OcrDocCard({ doc, onPreview, onMarkCompleted, onPrefligh
                                 <Send className="h-4 w-4" />
                             </button>
                         )}
-                        {isReconciled ? (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onMarkCompleted() }}
-                                title="Mark as Completed"
-                                aria-label="Mark as Completed"
-                                className="p-1.5 rounded-md text-green-700 bg-green-100 dark:text-green-200 dark:bg-green-500/25 hover:brightness-95 transition-all"
-                            >
-                                <CheckSquare className="h-4 w-4" />
-                            </button>
-                        ) : (
-                            <span
-                                title="Mark as Reviewed first"
-                                aria-label="Mark as Reviewed first (disabled — review first)"
-                                className="p-1.5 rounded-md text-green-400 bg-green-50/60 dark:text-green-500 dark:bg-green-500/10 inline-flex cursor-not-allowed opacity-70"
-                            >
-                                <CheckSquare className="h-4 w-4" />
-                            </span>
-                        )}
+                        {/* DE1.12 · Diego 2026-09-02 · botón Mark as Completed
+                            removido · no existe en gostrata.app premain (ambos
+                            estados: activo verde para reconciled y disabled). */}
                         <button
                             onClick={(e) => { e.stopPropagation(); onDeprecate() }}
                             title="Deprecate"

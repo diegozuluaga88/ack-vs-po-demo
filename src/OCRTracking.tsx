@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react'
 import { Dialog, Transition, TransitionChild, DialogPanel } from '@headlessui/react'
-import { ScanEye, FileText, CheckCircle2, AlertTriangle, Upload, Search, LayoutGrid, List, X, Archive, Sparkles, Loader2, MoreHorizontal, ChevronDown, Send, Trash2, CheckSquare } from 'lucide-react'
+import { ScanEye, FileText, CheckCircle2, AlertTriangle, Upload, Search, LayoutGrid, List, X, Archive, Sparkles, Loader2, MoreHorizontal, ChevronDown, Send, Trash2 } from 'lucide-react'
 import Navbar from './components/Navbar'
 import Breadcrumbs from './components/Breadcrumbs'
 import DocumentReviewModal from './components/ocr/DocumentReviewModal'
@@ -153,10 +153,8 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
         addToast('success', `Feedback submitted · ${s.category}${s.severity ? ` · ${s.severity}` : ''}`)
     }
 
-    const handleMarkCompleted = (docId: string) => {
-        setDocuments(prev => prev.map(d => d.id === docId ? { ...d, status: 'completed' } : d))
-        addToast('success', `Document marked as Completed`)
-    }
+    // DE1.12 · Diego 2026-09-02 · handleMarkCompleted removido junto con el
+    // botón "Mark as Completed" (no existe en gostrata.app premain).
 
     const handlePreflightSync = (doc: OcrDoc) => {
         setPreflightDoc(doc)
@@ -453,7 +451,7 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                         los live updates están pausados para no perder contexto).
                                         Reubicado al bloque ml-auto · justo antes del Upload button. */}
                                     {counts.in_review > 0 && (
-                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-background border border-border/60 rounded-full">
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 border border-border/60 rounded-full">
                                             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
                                             Live updates paused
                                         </div>
@@ -523,7 +521,6 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                                         key={doc.id}
                                                         doc={doc}
                                                         onPreview={() => setPreviewDoc(doc)}
-                                                        onMarkCompleted={() => handleMarkCompleted(doc.id)}
                                                         onPreflightSync={() => handlePreflightSync(doc)}
                                                         onDeprecate={() => openDeprecation(doc)}
                                                         selected={selectedDocIds.has(doc.id)}
@@ -622,34 +619,18 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                                             >
                                                                 <FileText className="h-4 w-4" />
                                                             </button>
+                                                            {/* DE1.12 · Diego 2026-09-02 · Mark as Completed removido
+                                                                (kanban + list) · no existe en gostrata.app premain.
+                                                                Preflight Sync se conserva solo cuando processed. */}
                                                             {doc.status === 'processed' && (
-                                                                <>
-                                                                    <button
-                                                                        onClick={() => handlePreflightSync(doc)}
-                                                                        className="p-1.5 rounded-md text-green-600 bg-green-50 dark:text-green-300 dark:bg-green-500/15 hover:brightness-95 transition-all"
-                                                                        title="Preflight Sync"
-                                                                        aria-label="Preflight Sync"
-                                                                    >
-                                                                        <Send className="h-4 w-4" />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleMarkCompleted(doc.id)}
-                                                                        className="p-1.5 rounded-md text-green-700 bg-green-100 dark:text-green-200 dark:bg-green-500/25 hover:brightness-95 transition-all"
-                                                                        title="Mark as Completed"
-                                                                        aria-label="Mark as Completed"
-                                                                    >
-                                                                        <CheckSquare className="h-4 w-4" />
-                                                                    </button>
-                                                                </>
-                                                            )}
-                                                            {!isReconciledLike && !isProcessing && doc.status !== 'completed' && (
-                                                                <span
-                                                                    title="Mark as Reviewed first"
-                                                                    aria-label="Mark as Reviewed first (disabled — review first)"
-                                                                    className="p-1.5 rounded-md text-green-400 bg-green-50/60 dark:text-green-500 dark:bg-green-500/10 inline-flex cursor-not-allowed opacity-70"
+                                                                <button
+                                                                    onClick={() => handlePreflightSync(doc)}
+                                                                    className="p-1.5 rounded-md text-green-600 bg-green-50 dark:text-green-300 dark:bg-green-500/15 hover:brightness-95 transition-all"
+                                                                    title="Preflight Sync"
+                                                                    aria-label="Preflight Sync"
                                                                 >
-                                                                    <CheckSquare className="h-4 w-4" />
-                                                                </span>
+                                                                    <Send className="h-4 w-4" />
+                                                                </button>
                                                             )}
                                                             <button
                                                                 onClick={() => openDeprecation(doc)}

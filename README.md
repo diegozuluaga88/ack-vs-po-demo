@@ -23,6 +23,7 @@ Todas las adaptaciones llevan comentario prefijo `DE1.*` para trazabilidad (el p
 | DE1.9 | Rename a `ack-vs-po-demo` · title HTML "Ack vs PO" · favicon Strata | `package.json` · `README.md` · `CLAUDE.md` · `index.html` · `public/favicon.svg` |
 | DE1.10 | Pill "Live updates paused" en toolbar OCR (visual-only) · happy path de Create Record ahora abre `PublishedView` standalone (era solo toast) para paridad con gostrata.app premain | `src/OCRTracking.tsx` (import + state + handler + dialog) |
 | DE1.11 | Paridad columnas + navbar prod · tabs renombrados 1:1 (Processing · To Review · In Review · Ready to Sync · Completed · Failed) · consolida identified+capturing en Processing · kanban usa `column.statuses` union · pill navbar `OCR Tracking`→`OCR` · chip Live updates paused refinado a ámbar + pill-shape + condicional `in_review > 0` · reubicado al bloque ml-auto | `src/OCRTracking.tsx` · `src/components/Navbar.tsx` |
+| DE1.12 | Removido botón "Mark as Completed" (kanban card + list view) · no existe en prod. Handler + import + prop del componente eliminados. Chip Live updates paused sin `bg-background` (fondo transparente para hermanar con toolbar) | `src/OCRTracking.tsx` · `src/components/ocr/OcrDocCard.tsx` |
 
 Todo lo demás viene tal cual de `expert-hub@1f58b0e`.
 
