@@ -155,7 +155,10 @@ export default function OcrDocCard({ doc, onPreview, onPreflightSync, onDeprecat
                         >
                             <FileText className="h-4 w-4" />
                         </button>
-                        {isReconciled && (
+                        {/* DE1.14 · Diego 2026-09-02 · Preflight Sync también visible
+                            en In Review (in_progress) para paridad con gostrata.app
+                            premain · antes solo aparecía en Ready to Sync (processed). */}
+                        {(isReconciled || doc.status === 'in_progress') && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onPreflightSync() }}
                                 title="Preflight Sync"

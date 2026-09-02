@@ -625,8 +625,9 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                                             </button>
                                                             {/* DE1.12 · Diego 2026-09-02 · Mark as Completed removido
                                                                 (kanban + list) · no existe en gostrata.app premain.
-                                                                Preflight Sync se conserva solo cuando processed. */}
-                                                            {doc.status === 'processed' && (
+                                                                DE1.14 · Preflight Sync también en In Review (in_progress)
+                                                                para paridad con prod · antes solo processed. */}
+                                                            {(doc.status === 'processed' || doc.status === 'in_progress') && (
                                                                 <button
                                                                     onClick={() => handlePreflightSync(doc)}
                                                                     className="p-1.5 rounded-md text-green-600 bg-green-50 dark:text-green-300 dark:bg-green-500/15 hover:brightness-95 transition-all"

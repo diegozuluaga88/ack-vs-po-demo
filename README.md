@@ -25,6 +25,7 @@ Todas las adaptaciones llevan comentario prefijo `DE1.*` para trazabilidad (el p
 | DE1.11 | Paridad columnas + navbar prod · tabs renombrados 1:1 (Processing · To Review · In Review · Ready to Sync · Completed · Failed) · consolida identified+capturing en Processing · kanban usa `column.statuses` union · pill navbar `OCR Tracking`→`OCR` · chip Live updates paused refinado a ámbar + pill-shape + condicional `in_review > 0` · reubicado al bloque ml-auto | `src/OCRTracking.tsx` · `src/components/Navbar.tsx` |
 | DE1.12 | Removido botón "Mark as Completed" (kanban card + list view) · no existe en prod. Handler + import + prop del componente eliminados. Chip Live updates paused sin `bg-background` (fondo transparente para hermanar con toolbar) | `src/OCRTracking.tsx` · `src/components/ocr/OcrDocCard.tsx` |
 | DE1.13 | Section title H1 del card `OCR Tracking`→`Expert Hub` (paridad con gostrata.app premain · breadcrumb conserva "Expert Hub > OCR Tracking") | `src/OCRTracking.tsx` |
+| DE1.14 | Botón Preflight Sync ahora también visible en cards con status `in_progress` (In Review) · antes solo en `processed` (Ready to Sync) · paridad con prod donde el plane aparece en ambos | `src/components/ocr/OcrDocCard.tsx` · `src/OCRTracking.tsx` |
 
 Todo lo demás viene tal cual de `expert-hub@1f58b0e`.
 
