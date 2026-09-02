@@ -155,10 +155,21 @@ export default function OcrDocCard({ doc, onPreview, onPreflightSync, onDeprecat
                         >
                             <FileText className="h-4 w-4" />
                         </button>
-                        {/* DE1.14 · Diego 2026-09-02 · Preflight Sync también visible
-                            en In Review (in_progress) para paridad con gostrata.app
-                            premain · antes solo aparecía en Ready to Sync (processed). */}
-                        {(isReconciled || doc.status === 'in_progress') && (
+                        {/* DE1.14/15 · Diego 2026-09-02 · Preflight Sync visible tanto en
+                            In Review (in_progress) como en Ready to Sync (processed) para
+                            paridad con gostrata.app premain. En In Review el botón está
+                            DESHABILITADO con tooltip "Awaiting full review" (icono lighter
+                            + cursor-not-allowed) · solo en Ready to Sync es funcional. */}
+                        {doc.status === 'in_progress' && (
+                            <span
+                                title="Awaiting full review"
+                                aria-label="Preflight Sync (disabled — awaiting full review)"
+                                className="p-1.5 rounded-md text-green-400 bg-green-50/60 dark:text-green-500 dark:bg-green-500/10 inline-flex cursor-not-allowed opacity-70"
+                            >
+                                <Send className="h-4 w-4" />
+                            </span>
+                        )}
+                        {isReconciled && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onPreflightSync() }}
                                 title="Preflight Sync"

@@ -623,11 +623,20 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                                             >
                                                                 <FileText className="h-4 w-4" />
                                                             </button>
-                                                            {/* DE1.12 · Diego 2026-09-02 · Mark as Completed removido
-                                                                (kanban + list) · no existe en gostrata.app premain.
-                                                                DE1.14 · Preflight Sync también en In Review (in_progress)
-                                                                para paridad con prod · antes solo processed. */}
-                                                            {(doc.status === 'processed' || doc.status === 'in_progress') && (
+                                                            {/* DE1.12 · Mark as Completed removido (kanban + list).
+                                                                DE1.14/15 · Preflight Sync visible en in_progress
+                                                                (disabled + tooltip "Awaiting full review") y en
+                                                                processed (funcional verde). Match gostrata.app premain. */}
+                                                            {doc.status === 'in_progress' && (
+                                                                <span
+                                                                    title="Awaiting full review"
+                                                                    aria-label="Preflight Sync (disabled — awaiting full review)"
+                                                                    className="p-1.5 rounded-md text-green-400 bg-green-50/60 dark:text-green-500 dark:bg-green-500/10 inline-flex cursor-not-allowed opacity-70"
+                                                                >
+                                                                    <Send className="h-4 w-4" />
+                                                                </span>
+                                                            )}
+                                                            {doc.status === 'processed' && (
                                                                 <button
                                                                     onClick={() => handlePreflightSync(doc)}
                                                                     className="p-1.5 rounded-md text-green-600 bg-green-50 dark:text-green-300 dark:bg-green-500/15 hover:brightness-95 transition-all"

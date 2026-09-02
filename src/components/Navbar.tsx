@@ -37,7 +37,11 @@ export default function Navbar({ onLogout, activeTab = 'OCR', onNavigate }: Navb
 
     // Catalog tab removed · feature movida al repo expert-catalog.
     // Para retomar · `git checkout backup/with-catalog`.
+    // DE1.16 · Diego 2026-09-02 · orden sincronizado con gostrata.app premain:
+    // Feedback (chat bubble · IZQUIERDA) → OCR (pill · centro) → Comparisons
+    // (icon · derecha de OCR). Antes era OCR → Comparisons → Feedback.
     const tabs: { name: string; label: string; page: string; icon: any; hidden?: boolean }[] = [
+        { name: 'Feedback', label: 'Feedback', page: 'feedback', icon: MessageSquare },
         // DE1.11 · Diego 2026-09-02 · pill label acortado a 'OCR' para paridad
         // con gostrata.app premain (antes decía 'OCR Tracking').
         { name: 'OCR', label: 'OCR', page: 'ocr-tracking', icon: ScanEye },
@@ -46,7 +50,6 @@ export default function Navbar({ onLogout, activeTab = 'OCR', onNavigate }: Navb
         // (src/Transactions.tsx + rutas en App.tsx) por si se necesita restaurar.
         { name: 'Transactions', label: 'Transactions', page: 'transactions', icon: Receipt, hidden: true },
         { name: 'Comparisons', label: 'Comparisons', page: 'comparisons', icon: GitCompare },
-        { name: 'Feedback', label: 'Feedback', page: 'feedback', icon: MessageSquare },
     ]
     const visibleTabs = tabs.filter(t => !t.hidden)
 
