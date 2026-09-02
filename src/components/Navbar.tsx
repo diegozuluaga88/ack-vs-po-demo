@@ -39,7 +39,10 @@ export default function Navbar({ onLogout, activeTab = 'OCR', onNavigate }: Navb
     // Para retomar · `git checkout backup/with-catalog`.
     const tabs: { name: string; label: string; page: string; icon: any; hidden?: boolean }[] = [
         { name: 'OCR', label: 'OCR Tracking', page: 'ocr-tracking', icon: ScanEye },
-        { name: 'Transactions', label: 'Transactions', page: 'transactions', icon: Receipt },
+        // DE1.5 · Diego 2026-09-02 · Transactions oculto en el demo template ·
+        // no aparece en la versión premain de gostrata.app. Se mantiene el código
+        // (src/Transactions.tsx + rutas en App.tsx) por si se necesita restaurar.
+        { name: 'Transactions', label: 'Transactions', page: 'transactions', icon: Receipt, hidden: true },
         { name: 'Comparisons', label: 'Comparisons', page: 'comparisons', icon: GitCompare },
         { name: 'Feedback', label: 'Feedback', page: 'feedback', icon: MessageSquare },
     ]
