@@ -447,19 +447,9 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                         </button>
                                     </div>
 
-                                    {/* DE1.10 · Diego 2026-09-02 · pill visual-only para paridad con
-                                        gostrata.app premain · sin lógica real. DE1.11 · refinado ·
-                                        ámbar warning · pill-shape · SOLO se muestra cuando hay al
-                                        menos una card en In Review (en prod aparece únicamente
-                                        mientras un experto tiene un doc activo · significa que
-                                        los live updates están pausados para no perder contexto).
-                                        Reubicado al bloque ml-auto · justo antes del Upload button. */}
-                                    {counts.in_review > 0 && (
-                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 border border-border/60 rounded-full">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
-                                            Live updates paused
-                                        </div>
-                                    )}
+                                    {/* DE1.17 · Diego 2026-09-02 · chip "Live updates paused"
+                                        removido (Diego pidió quitarlo · antes DE1.10/11 lo
+                                        habíamos agregado y refinado para paridad prod). */}
 
                                     {/* Upload Document — prominent lime brand button */}
                                     <button

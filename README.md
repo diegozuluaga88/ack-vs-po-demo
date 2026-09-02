@@ -28,6 +28,7 @@ Todas las adaptaciones llevan comentario prefijo `DE1.*` para trazabilidad (el p
 | DE1.14 | Botón Preflight Sync ahora también visible en cards con status `in_progress` (In Review) · antes solo en `processed` (Ready to Sync) · paridad con prod donde el plane aparece en ambos | `src/components/ocr/OcrDocCard.tsx` · `src/OCRTracking.tsx` |
 | DE1.15 | Rectificación DE1.14 · el Preflight Sync en In Review va DESHABILITADO (span con `cursor-not-allowed opacity-70` + tooltip "Awaiting full review") · funcional solo en Ready to Sync (processed) · match prod donde el plane en in_progress se ve lighter con ese hint | `src/components/ocr/OcrDocCard.tsx` · `src/OCRTracking.tsx` |
 | DE1.16 | Orden de tabs del navbar sincronizado con prod: `Feedback → OCR → Comparisons` (antes `OCR → Comparisons → Feedback`) · el chat bubble ahora aparece a la izquierda del pill OCR como en gostrata.app premain | `src/components/Navbar.tsx` |
+| DE1.17 | Chip "Live updates paused" removido (antes DE1.10/11 lo agregaba condicional a `in_review > 0`) | `src/OCRTracking.tsx` |
 
 Todo lo demás viene tal cual de `expert-hub@1f58b0e`.
 
