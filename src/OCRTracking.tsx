@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
+import { Dialog, Transition, TransitionChild, DialogPanel } from '@headlessui/react'
 import { ScanEye, FileText, CheckCircle2, AlertTriangle, Upload, Search, LayoutGrid, List, X, Archive, Sparkles, Loader2, MoreHorizontal, ChevronDown, Send, Trash2, CheckSquare } from 'lucide-react'
 import Navbar from './components/Navbar'
 import Breadcrumbs from './components/Breadcrumbs'
 import DocumentReviewModal from './components/ocr/DocumentReviewModal'
 import CreateRecordModal, { type RecordType } from './components/create-record/CreateRecordModal'
+import PublishedView, { type PublishResult } from './components/create-record/states/PublishedView'
 import { getPreflightForDoc } from './components/create-record/mockPreflightData'
 import { preflightHasInconsistencies } from './components/create-record/usePreflight'
 import { ToastContainer, useToast } from './components/AuthToast'
@@ -94,6 +96,9 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
     const [preflightDoc, setPreflightDoc] = useState<OcrDoc | null>(null)
     const [processingDoc, setProcessingDoc] = useState<string | null>(null)
     const [createRecordDoc, setCreateRecordDoc] = useState<typeof OCR_DOCUMENTS[0] | null>(null)
+    // DE1.10 · success dialog para happy path (sin review) · se muestra
+    // envuelto en Dialog al final del render (ver bloque marcado DE1.10).
+    const [publishedResult, setPublishedResult] = useState<{ result: PublishResult; recordType: RecordType; vendor: string } | null>(null)
     const [previewDoc, setPreviewDoc] = useState<typeof OCR_DOCUMENTS[0] | null>(null)
     const [deprecationTarget, setDeprecationTarget] = useState<typeof OCR_DOCUMENTS[0] | null>(null)
     const [documents, setDocuments] = useState(OCR_DOCUMENTS)
@@ -153,14 +158,31 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
     const recordTypeFromDoc = (doc: OcrDoc): RecordType =>
         doc.type === 'Acknowledgment' ? 'ACK' : 'PO'
 
+    // DE1.10 · Diego 2026-09-02 · en el happy path (sin inconsistencies)
+    // se mostraba solo un toast · ahora abre el dialog PublishedView
+    // (Acknowledgement created / Purchase order created) con las 4
+    // StatCards para paridad con gostrata.app premain.
     const handleCreateRecord = (doc: OcrDoc) => {
         const preflight = getPreflightForDoc(doc as unknown as Parameters<typeof getPreflightForDoc>[0])
         if (preflightHasInconsistencies(preflight)) {
             setCreateRecordDoc(doc)
             return
         }
-        const recordId = `${recordTypeFromDoc(doc) === 'PO' ? 'PO' : 'ACK'}-${Math.floor(Math.random() * 9000) + 1000}`
-        addToast('success', `Record ${recordId} created · ${doc.vendor}`)
+        const recordType = recordTypeFromDoc(doc)
+        const totalFields = preflight.sections.reduce((sum, s) => sum + s.fields.length, 0)
+        const includedExtras = preflight.extras.filter(x => x.included).length
+        const recordId = `${recordType === 'PO' ? 'PO' : 'ACK'}-${Math.floor(Math.random() * 9000) + 1000}`
+        setPublishedResult({
+            result: {
+                recordId,
+                fieldsSaved: totalFields + includedExtras,
+                fieldsDropped: 0,
+                lineCount: preflight.lineItems.length,
+                environment: preflight.environment,
+            },
+            recordType,
+            vendor: doc.vendor,
+        })
     }
 
     const openDeprecation = (doc: OcrDoc) => {
@@ -399,6 +421,14 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                     >
                                         Full history
                                     </button>
+                                </div>
+
+                                {/* DE1.10 · Diego 2026-09-02 · pill visual-only para paridad
+                                    con gostrata.app premain · sin lógica real, solo comunica
+                                    el estado de live-updates que en prod sí es interactivo. */}
+                                <div className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-foreground bg-background border border-input rounded-lg">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true" />
+                                    Live updates paused
                                 </div>
 
                                 <div className="ml-auto flex items-center gap-2">
@@ -714,6 +744,46 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                     if (doc) addToast('success', `Record ${recordId} created · ${doc.vendor}`)
                 }}
             />
+
+            {/* DE1.10 · Diego 2026-09-02 · Success dialog standalone para el
+                happy path (sin inconsistencies). Reusa PublishedView del
+                CreateRecordModal envuelto en un Dialog dedicado · evita el
+                review flow completo cuando el preflight no tiene issues. */}
+            <Transition show={!!publishedResult} as={Fragment}>
+                <Dialog as="div" className="relative z-[200]" onClose={() => setPublishedResult(null)}>
+                    <TransitionChild
+                        as={Fragment}
+                        enter="ease-out duration-200" enterFrom="opacity-0" enterTo="opacity-100"
+                        leave="ease-in duration-150" leaveFrom="opacity-100" leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-zinc-900/40 backdrop-blur-md" />
+                    </TransitionChild>
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-6">
+                            <TransitionChild
+                                as={Fragment}
+                                enter="ease-out duration-260" enterFrom="opacity-0 translate-y-2 scale-[0.995]" enterTo="opacity-100 translate-y-0 scale-100"
+                                leave="ease-in duration-150" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-[0.995]"
+                            >
+                                <DialogPanel className="relative w-full max-w-[1120px] h-[760px] rounded-3xl bg-card border border-border shadow-2xl overflow-hidden flex flex-col">
+                                    {publishedResult && (
+                                        <PublishedView
+                                            result={publishedResult.result}
+                                            recordType={publishedResult.recordType}
+                                            vendor={publishedResult.vendor}
+                                            onClose={() => setPublishedResult(null)}
+                                            onViewRecord={() => {
+                                                addToast('success', `Record ${publishedResult.result.recordId} created · ${publishedResult.vendor}`)
+                                                setPublishedResult(null)
+                                            }}
+                                        />
+                                    )}
+                                </DialogPanel>
+                            </TransitionChild>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
 
             {/* PO ↔ ACK Comparison · solo visible cuando un doc Reviewed tiene linked counterpart */}
             <ComparisonLauncher

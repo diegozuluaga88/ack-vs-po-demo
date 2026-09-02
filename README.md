@@ -21,6 +21,7 @@ Todas las adaptaciones llevan comentario prefijo `DE1.*` para trazabilidad (el p
 | DE1.7 | Breadcrumb movido debajo del navbar (era fixed encima) | `src/OCRTracking.tsx` · `src/Comparisons.tsx` |
 | DE1.8 | OCR toolbar · pills "Last 30 days" (default) + "Full history" | `src/OCRTracking.tsx` |
 | DE1.9 | Rename a `ack-vs-po-demo` · title HTML "Ack vs PO" · favicon Strata | `package.json` · `README.md` · `CLAUDE.md` · `index.html` · `public/favicon.svg` |
+| DE1.10 | Pill "Live updates paused" en toolbar OCR (visual-only) · happy path de Create Record ahora abre `PublishedView` standalone (era solo toast) para paridad con gostrata.app premain | `src/OCRTracking.tsx` (import + state + handler + dialog) |
 
 Todo lo demás viene tal cual de `expert-hub@1f58b0e`.
 
