@@ -6,6 +6,9 @@ import DocTypeChip from './components/ocr/DocTypeChip'
 import { avatarGradient } from './components/team/teamMembers'
 import { ToastContainer, useToast } from './components/AuthToast'
 import ComparisonLauncher from './components/comparison/ComparisonLauncher'
+// DE1.18 · Diego 2026-09-02 · card local con layout OCR-style para paridad
+// visual con gostrata.app premain. Vive en wrappers/ · no toca comparison/*.
+import ComparisonDocCard from './components/comparison/wrappers/ComparisonDocCard'
 import AckReconciliationModal from './components/AckReconciliationModal'
 import ResolveInconsistencyModal from './components/ResolveDiscrepancyModal'
 
@@ -15,11 +18,20 @@ interface ComparisonsProps {
 }
 
 type CompareStatus = 'Pending' | 'Reviewed' | 'Discrepancy' | 'Completed'
+// DE1.18 · Diego 2026-09-02 · partición del listado por tipo (PO/ACK) para
+// paridad con prod · antes se filtraba por status (Pending/Reviewed/etc).
+type CompareDocType = 'Purchase Order' | 'Acknowledgment'
 
 interface ComparisonDoc {
-    /** Acknowledgment id (matches the mock comparison keys, e.g. "ACK-8840"). */
+    /** Doc id (matches mock comparison keys, e.g. "ACK-8840" o "PO-2026-002"). */
     id: string
     vendor: string
+    // DE1.18 · type explícito · antes hardcoded como Acknowledgment.
+    type: CompareDocType
+    // DE1.18 · filename estilo prod (ej. "PO KT2131.001.01.pdf").
+    name: string
+    // DE1.18 · sub-code opcional debajo del vendor (ej. "KT2131.001.01").
+    subCode?: string
     /** DE1.3 · Diego 2026-09-01 · optional para modelar ACKs huérfanos
      *  (llegaron del vendor pero el PO nunca se emitió). Los huérfanos
      *  se ocultan del listado por la regla del demo (ver COMPARISON_DOCS). */
@@ -39,29 +51,42 @@ interface ComparisonDoc {
 // (ni se puede comparar). Los 2 últimos entries de _ALL son "huérfanos"
 // intencionales para validar visualmente que el filtro los esconde ·
 // sin ellos la regla es no-op y no se puede probar.
+// DE1.18 · Diego 2026-09-02 · dataset ampliado · antes solo había ACKs.
+// Ahora incluye entries `type: 'Purchase Order'` para que la tab
+// Purchase Orders tenga contenido (paridad con prod que particiona por tipo).
+// Los IDs y linked counterparts respetan el mapeo original (los ACK-* que
+// tenían `relatedPo: PO-2026-*` ahora también tienen entries PO-2026-*
+// standalone visibles bajo la tab PO).
 const COMPARISON_DOCS_ALL: ComparisonDoc[] = [
-    { id: 'ACK-8840', vendor: 'Steelcase', relatedPo: 'PO-2026-002', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'Jan 13, 2026', initials: 'SC', lineItems: 50 },
-    { id: 'ACK-8841', vendor: 'Knoll', relatedPo: 'PO-2026-003', status: 'Pending', reviewStatus: 'Pending For Review', date: 'Jan 12, 2026', initials: 'KN', lineItems: 12 },
-    { id: 'ACK-8842', vendor: 'AIS Furniture', relatedPo: 'PO-2026-004', status: 'Pending', reviewStatus: 'Pending For Review', date: 'Jan 15, 2026', initials: 'AI', lineItems: 6 },
-    { id: 'ACK-8839', vendor: 'Herman Miller', relatedPo: 'PO-2026-001', status: 'Reviewed', reviewStatus: 'Reviewed', date: 'Jan 14, 2026', initials: 'HM', lineItems: 8 },
-    { id: 'ACK-330357', vendor: 'ergotron', relatedPo: 'PO-330357', status: 'Reviewed', reviewStatus: 'Reviewed', date: '21 days ago', initials: 'EG', lineItems: 3 },
-    { id: 'ACK-7855', vendor: 'Knoll', relatedPo: 'PO-4501', status: 'Pending', reviewStatus: 'Pending For Review', date: '5 days ago', initials: 'KN', lineItems: 3 },
-    { id: 'ACK-7839', vendor: 'Steelcase', relatedPo: 'PO-1027', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'today', initials: 'SC', lineItems: 4 },
-    { id: 'ACK-9001', vendor: 'OFS Brands', relatedPo: 'PO-7741', status: 'Completed', reviewStatus: 'Reviewed', date: '14 days ago', initials: 'OF', lineItems: 2 },
+    // ── Acknowledgements ────────────────────────────────────────────────
+    { id: 'ACK-8840', vendor: 'Steelcase', type: 'Acknowledgment', name: 'ACK-8840_Steelcase.pdf', relatedPo: 'PO-2026-002', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'Jan 13, 2026', initials: 'SC', lineItems: 50 },
+    { id: 'ACK-8841', vendor: 'Knoll', type: 'Acknowledgment', name: 'ACK-8841_Knoll.pdf', relatedPo: 'PO-2026-003', status: 'Pending', reviewStatus: 'Pending For Review', date: 'Jan 12, 2026', initials: 'KN', lineItems: 12 },
+    { id: 'ACK-8842', vendor: 'AIS Furniture', type: 'Acknowledgment', name: 'ACK-8842_AIS.pdf', relatedPo: 'PO-2026-004', status: 'Pending', reviewStatus: 'Pending For Review', date: 'Jan 15, 2026', initials: 'AI', lineItems: 6 },
+    { id: 'ACK-8839', vendor: 'Herman Miller', type: 'Acknowledgment', name: 'ACK-8839_HermanMiller.pdf', relatedPo: 'PO-2026-001', status: 'Reviewed', reviewStatus: 'Reviewed', date: 'Jan 14, 2026', initials: 'HM', lineItems: 8 },
+    { id: 'ACK-330357', vendor: 'ergotron', type: 'Acknowledgment', name: 'ACK-330357_ergotron.pdf', relatedPo: 'PO-330357', status: 'Reviewed', reviewStatus: 'Reviewed', date: '21 days ago', initials: 'EG', lineItems: 3 },
+    { id: 'ACK-7855', vendor: 'Knoll', type: 'Acknowledgment', name: 'ACK-7855_Knoll.pdf', relatedPo: 'PO-4501', status: 'Pending', reviewStatus: 'Pending For Review', date: '5 days ago', initials: 'KN', lineItems: 3 },
+    { id: 'ACK-7839', vendor: 'Steelcase', type: 'Acknowledgment', name: 'ACK-7839_Steelcase.pdf', relatedPo: 'PO-1027', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'today', initials: 'SC', lineItems: 4 },
+    { id: 'ACK-9001', vendor: 'OFS Brands', type: 'Acknowledgment', name: 'ACK-9001_OFS.pdf', relatedPo: 'PO-7741', status: 'Completed', reviewStatus: 'Reviewed', date: '14 days ago', initials: 'OF', lineItems: 2 },
+    // ── Purchase Orders ──────────────────────────────────────────────────
+    { id: 'PO-2026-002', vendor: 'Steelcase', type: 'Purchase Order', name: 'PO-2026-002_Steelcase.pdf', subCode: 'KT2131.001.02', relatedPo: 'ACK-8840', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'Jan 13, 2026', initials: 'SC', lineItems: 50 },
+    { id: 'PO-2026-003', vendor: 'Knoll', type: 'Purchase Order', name: 'PO-2026-003_Knoll.pdf', subCode: 'KT2131.001.03', relatedPo: 'ACK-8841', status: 'Pending', reviewStatus: 'Pending For Review', date: 'Jan 12, 2026', initials: 'KN', lineItems: 12 },
+    { id: 'PO-2026-001', vendor: 'Herman Miller', type: 'Purchase Order', name: 'PO-2026-001_HermanMiller.pdf', subCode: 'KT2131.001.01', relatedPo: 'ACK-8839', status: 'Reviewed', reviewStatus: 'Reviewed', date: 'Jan 14, 2026', initials: 'HM', lineItems: 8 },
+    { id: 'PO-1027', vendor: 'Steelcase', type: 'Purchase Order', name: 'PO-1027_Steelcase.pdf', relatedPo: 'ACK-7839', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'today', initials: 'SC', lineItems: 4 },
+    { id: 'PO-7741', vendor: 'OFS Brands', type: 'Purchase Order', name: 'PO-7741_OFS.pdf', relatedPo: 'ACK-9001', status: 'Completed', reviewStatus: 'Reviewed', date: '14 days ago', initials: 'OF', lineItems: 2 },
     // DE1.3 · huérfanos (sin PO) · deben quedar ocultos
-    { id: 'ACK-8845', vendor: 'AIS Furniture', status: 'Pending', reviewStatus: 'Pending For Review', date: 'today', initials: 'AI', lineItems: 4 },
-    { id: 'ACK-9022', vendor: 'Herman Miller', status: 'Pending', reviewStatus: 'Pending For Review', date: 'yesterday', initials: 'HM', lineItems: 7 },
+    { id: 'ACK-8845', vendor: 'AIS Furniture', type: 'Acknowledgment', name: 'ACK-8845_AIS.pdf', status: 'Pending', reviewStatus: 'Pending For Review', date: 'today', initials: 'AI', lineItems: 4 },
+    { id: 'ACK-9022', vendor: 'Herman Miller', type: 'Acknowledgment', name: 'ACK-9022_HermanMiller.pdf', status: 'Pending', reviewStatus: 'Pending For Review', date: 'yesterday', initials: 'HM', lineItems: 7 },
 ]
 
 // DE1.3 · filtro dura · si no hay PO relacionado, el ACK no llega al UI.
 const COMPARISON_DOCS: ComparisonDoc[] = COMPARISON_DOCS_ALL.filter(d => !!d.relatedPo)
 
-const FUNNEL: { id: string; label: string }[] = [
-    { id: 'all', label: 'All' },
-    { id: 'pending', label: 'Pending' },
-    { id: 'reviewed', label: 'Reviewed' },
-    { id: 'discrepancy', label: 'Discrepancy' },
-    { id: 'completed', label: 'Completed' },
+// DE1.18 · Diego 2026-09-02 · tabs sincronizados con prod
+// (dev.gostrata.app/expert-hub/comparisons) · particiona por tipo de doc
+// (PO/ACK) · antes eran 5 tabs por status (all/pending/reviewed/etc).
+const FUNNEL: { id: 'po' | 'ack'; label: string; type: CompareDocType }[] = [
+    { id: 'po', label: 'Purchase Orders', type: 'Purchase Order' },
+    { id: 'ack', label: 'Acknowledgements', type: 'Acknowledgment' },
 ]
 
 function statusClasses(s: CompareStatus): string {
@@ -74,7 +99,9 @@ function statusClasses(s: CompareStatus): string {
 }
 
 export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) {
-    const [activeTab, setActiveTab] = useState('all')
+    // DE1.18 · Diego 2026-09-02 · default 'po' · match prod que muestra
+    // Purchase Orders como tab activa al cargar.
+    const [activeTab, setActiveTab] = useState<'po' | 'ack'>('po')
     const [query, setQuery] = useState('')
     // DE1.4 · Diego 2026-09-02 · list como default (era 'grid')
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
@@ -88,13 +115,16 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
         addToast(type, `${title} · ${description}`)
 
     const counts = useMemo(() => {
-        const c: Record<string, number> = { all: COMPARISON_DOCS.length }
-        for (const d of COMPARISON_DOCS) c[d.status.toLowerCase()] = (c[d.status.toLowerCase()] ?? 0) + 1
-        return c
+        // DE1.18 · counts particionados por tipo (PO/ACK).
+        const po = COMPARISON_DOCS.filter(d => d.type === 'Purchase Order').length
+        const ack = COMPARISON_DOCS.filter(d => d.type === 'Acknowledgment').length
+        return { po, ack } as Record<'po' | 'ack', number>
     }, [])
 
     const filtered = useMemo(() => COMPARISON_DOCS.filter(d => {
-        const matchesTab = activeTab === 'all' || d.status.toLowerCase() === activeTab
+        // DE1.18 · filtro por tipo (PO/ACK) en vez de status.
+        const wantType: CompareDocType = activeTab === 'po' ? 'Purchase Order' : 'Acknowledgment'
+        const matchesTab = d.type === wantType
         const q = query.trim().toLowerCase()
         const matchesSearch = !q || d.vendor.toLowerCase().includes(q) || d.id.toLowerCase().includes(q) || (d.relatedPo?.toLowerCase().includes(q) ?? false)
         return matchesTab && matchesSearch
@@ -179,74 +209,21 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
                                 <p className="text-sm text-muted-foreground mt-1">Acknowledgments paired with a purchase order appear here for review.</p>
                             </div>
                         ) : viewMode === 'grid' ? (
-                            /* ── Grid (cards) ── */
+                            // DE1.18 · Diego 2026-09-02 · rediseño de grid al layout
+                            // OCR-style vía <ComparisonDocCard>. Antes tenía botón
+                            // grande central "Compare with PO", chip status pill y
+                            // sub-iconos reconcile/discrepancy · match visual con
+                            // OcrDocCard + 1 icono compare adicional per Diego.
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
                                 {filtered.map(d => (
-                                    <div key={d.id} className="group bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-                                        <div className="p-4">
-                                            <div className="flex items-start justify-between gap-2 mb-3">
-                                                <div className="flex items-start gap-2.5 min-w-0">
-                                                    <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                                                        <FileText className="h-4 w-4 text-muted-foreground" />
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-sm font-bold text-foreground truncate">{d.vendor}</span>
-                                                            <DocTypeChip type="Acknowledgment" size="sm" />
-                                                        </div>
-                                                        <div className="text-[11px] text-muted-foreground font-mono truncate">{d.id}</div>
-                                                    </div>
-                                                </div>
-                                                <div title={d.vendor} className={`h-7 w-7 rounded-full bg-gradient-to-br ${avatarGradient(d.id)} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}>
-                                                    {d.initials}
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-1.5 mb-4">
-                                                <div className="flex items-center justify-between text-sm">
-                                                    <span className="text-muted-foreground">Linked PO</span>
-                                                    <span className="font-semibold text-foreground font-mono">{d.relatedPo}</span>
-                                                </div>
-                                                <div className="flex items-center justify-between text-sm">
-                                                    <span className="text-muted-foreground">Line Items</span>
-                                                    <span className="font-semibold text-foreground">{d.lineItems} line items</span>
-                                                </div>
-                                            </div>
-
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); openCompare(d) }}
-                                                title="Compare this acknowledgment against its linked purchase order"
-                                                className="mb-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-300/30 text-foreground border border-brand-300/50 hover:bg-brand-300/50 dark:bg-brand-500/15 dark:border-brand-500/40 dark:hover:bg-brand-500/25 px-3 py-2 text-xs font-bold transition-colors"
-                                            >
-                                                <GitCompare className="h-3.5 w-3.5" />
-                                                Compare with PO
-                                            </button>
-
-                                            <div className="border-t border-border pt-3 flex items-center justify-between">
-                                                <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusClasses(d.status)}`}>
-                                                    {d.status}
-                                                </span>
-                                                <div className="flex items-center gap-1">
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); setIsReconciliationOpen(true) }}
-                                                        title="Reconcile PO vs ACK"
-                                                        className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                                    >
-                                                        <FileSearch className="h-4 w-4" />
-                                                    </button>
-                                                    {d.status === 'Discrepancy' && (
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); openResolve(d) }}
-                                                            title="Resolve discrepancies"
-                                                            className="p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/15 transition-colors"
-                                                        >
-                                                            <AlertTriangle className="h-4 w-4" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <ComparisonDocCard
+                                        key={d.id}
+                                        doc={d}
+                                        onCompare={() => openCompare(d)}
+                                        onPreview={() => addToast('info', `Preview ${d.id} (stub)`)}
+                                        onDelete={() => addToast('info', `Delete ${d.id} (stub)`)}
+                                        onSend={() => addToast('info', `Send ${d.id} (stub)`)}
+                                    />
                                 ))}
                             </div>
                         ) : (
@@ -274,7 +251,8 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="text-sm font-bold text-foreground">{d.vendor}</div>
-                                                    <div className="mt-1"><DocTypeChip type="Acknowledgment" size="sm" /></div>
+                                                    {/* DE1.18 · chip usa d.type (antes hardcoded 'Acknowledgment'). */}
+                                                    <div className="mt-1"><DocTypeChip type={d.type} size="sm" /></div>
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap font-mono text-foreground">{d.relatedPo}</td>
                                                 <td className="px-4 py-3 whitespace-nowrap">

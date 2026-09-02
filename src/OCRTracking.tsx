@@ -21,7 +21,6 @@ import { TEAM_MEMBERS, avatarGradient } from './components/team/teamMembers'
 import { openOriginalMockPdf } from './utils/viewOriginalMockPdf'
 import FeedbackComposerModal, { type FeedbackContext, type FeedbackSubmission } from './components/feedback/FeedbackComposerModal'
 import { useTenant } from './TenantContext'
-import ComparisonLauncher from './components/comparison/ComparisonLauncher'
 
 interface OcrDoc {
     id: string
@@ -119,7 +118,9 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
     const [activeTab, setActiveTab] = useState<'all' | 'processing' | 'to_review' | 'in_review' | 'ready_to_sync' | 'completed' | 'failed'>('all')
     const [feedbackContext, setFeedbackContext] = useState<FeedbackContext | null>(null)
     const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set())
-    const [compareDoc, setCompareDoc] = useState<OcrDoc | null>(null)
+    // DE1.18 · Diego 2026-09-02 · compareDoc state removido junto con el
+    // botón "Compare linked documents" y el ComparisonLauncher montado.
+    // El flow de comparación vive en /comparisons ahora.
     const { toasts, addToast, dismissToast } = useToast()
     const { selectedTenants } = useTenant()
 
@@ -519,10 +520,6 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                                         onDeprecate={() => openDeprecation(doc)}
                                                         selected={selectedDocIds.has(doc.id)}
                                                         onToggleSelect={() => toggleDocSelect(doc.id)}
-                                                        onCompareLinked={
-                                                            // Solo cuando doc tiene PO + ACK linkeados (post review · backend ya enlazó)
-                                                            doc.poNumber && doc.ackId ? () => setCompareDoc(doc) : undefined
-                                                        }
                                                     />
                                                 ))}
                                                 {docs.length === 0 && (
@@ -789,18 +786,8 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                 </Dialog>
             </Transition>
 
-            {/* PO ↔ ACK Comparison · solo visible cuando un doc Reviewed tiene linked counterpart */}
-            <ComparisonLauncher
-                isOpen={!!compareDoc}
-                onClose={() => setCompareDoc(null)}
-                poNumber={compareDoc?.poNumber ?? ''}
-                ackId={compareDoc?.ackId ?? ''}
-                onDecision={(report, action) => {
-                    const t = action === 'REJECT' ? 'error' : action === 'REQUEST_REVIEW' ? 'info' : 'success'
-                    const verb = action === 'ACCEPT' ? 'accepted' : action === 'REJECT' ? 'rejected' : 'flagged for review'
-                    addToast(t, `${report.po_number} vs ${report.ack_id} ${verb} (simulated)`)
-                }}
-            />
+            {/* DE1.18 · Diego 2026-09-02 · ComparisonLauncher removido de OCR ·
+                el flow de comparación ahora vive únicamente en /comparisons. */}
 
             {/* Preflight Sync Modal — opens via airplane icon on Reviewed docs */}
             <PreflightSyncModal
