@@ -716,7 +716,8 @@ export default function Transactions({ onLogout, onNavigateToWorkspace, onNaviga
         return () => clearTimeout(t)
     }, [csgnPhase])
 
-    const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('pipeline');
+    // DE1.4 · Diego 2026-09-02 · list como default (era 'pipeline')
+    const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list');
     const [showMetrics, setShowMetrics] = useState(false);
     const [txTimePeriod, setTxTimePeriod] = useState<TimePeriod>('Month');
     const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);

@@ -76,7 +76,8 @@ function statusClasses(s: CompareStatus): string {
 export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) {
     const [activeTab, setActiveTab] = useState('all')
     const [query, setQuery] = useState('')
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+    // DE1.4 · Diego 2026-09-02 · list como default (era 'grid')
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
     const { toasts, addToast, dismissToast } = useToast()
 
     const [compareDoc, setCompareDoc] = useState<ComparisonDoc | null>(null)
