@@ -76,13 +76,17 @@ const OCR_DOCUMENTS: OcrDoc[] = [
     { id: 'OCR-021', name: 'PO-6678_NationalOffice.pdf', vendor: 'National Office Furniture', type: 'Purchase Order', date: '20 days ago', status: 'processed', lineItems: 6, poNumber: 'PO-6678', ackId: 'ACK-6678', relatedDocId: 'OCR-NO-ACK' },
 ]
 
-const COLUMNS = [
-    { id: 'identified', label: 'Ingesting', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-500/20' },
-    { id: 'capturing', label: 'Needs Attention', icon: ScanEye, color: 'text-ai', bg: 'bg-ai-light dark:bg-ai/10', border: 'border-ai/20' },
-    { id: 'inconsistencies', label: 'Awaiting Expert', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-500/20' },
-    { id: 'in_progress', label: 'In-progress', icon: Loader2, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', border: 'border-indigo-200 dark:border-indigo-500/20' },
-    { id: 'processed', label: 'Reviewed', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-500/10', border: 'border-green-500/20' },
-    { id: 'completed', label: 'Completed', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-500/10', border: 'border-green-500/20' },
+// DE1.11 · Diego 2026-09-02 · rename + consolidar columnas para paridad con
+// gostrata.app premain. Prod usa 5 columnas kanban visibles (Processing · To
+// Review · In Review · Ready to Sync · Completed) + Failed como tab-only.
+// Consolidamos identified+capturing dentro de Processing (semántica prod ·
+// "OCR scan + field extraction" agrupados) y renombramos 1:1 el resto.
+const COLUMNS: { id: string; label: string; statuses: OcrDocStatus[]; icon: any; color: string; bg: string; border: string }[] = [
+    { id: 'processing', label: 'Processing', statuses: ['identified', 'capturing'], icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-500/20' },
+    { id: 'to_review', label: 'To Review', statuses: ['inconsistencies'], icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-500/20' },
+    { id: 'in_review', label: 'In Review', statuses: ['in_progress'], icon: Loader2, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10', border: 'border-indigo-200 dark:border-indigo-500/20' },
+    { id: 'ready_to_sync', label: 'Ready to Sync', statuses: ['processed'], icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-500/10', border: 'border-green-500/20' },
+    { id: 'completed', label: 'Completed', statuses: ['completed'], icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-500/10', border: 'border-green-500/20' },
 ]
 
 interface OCRTrackingProps {
@@ -109,7 +113,10 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
     // real sobre los mocks (el mock no tiene timestamps útiles para filtrar).
     const [dateRange, setDateRange] = useState<'last-30' | 'full'>('last-30')
     const [searchQuery, setSearchQuery] = useState('')
-    const [activeTab, setActiveTab] = useState<'all' | 'identified' | 'capturing' | 'inconsistencies' | 'in_progress' | 'processed' | 'completed' | 'deprecated'>('all')
+    // DE1.11 · Diego 2026-09-02 · tab IDs renombrados para paridad con
+    // gostrata.app premain (Processing · To Review · In Review · Ready to
+    // Sync · Completed · Failed). Status IDs internos del doc no cambian.
+    const [activeTab, setActiveTab] = useState<'all' | 'processing' | 'to_review' | 'in_review' | 'ready_to_sync' | 'completed' | 'failed'>('all')
     const [feedbackContext, setFeedbackContext] = useState<FeedbackContext | null>(null)
     const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set())
     const [compareDoc, setCompareDoc] = useState<OcrDoc | null>(null)
@@ -248,19 +255,21 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
 
     const filteredDocs = documents.filter(d => {
         const matchesSearch = d.name.toLowerCase().includes(searchQuery.toLowerCase()) || d.vendor.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesTab = activeTab === 'all' || d.status === activeTab
+        // DE1.11 · tabs consumen la union de `statuses` de COLUMNS (ej.
+        // Processing = identified + capturing) para paridad con prod.
+        const tabDef = COLUMNS.find(c => c.id === activeTab)
+        const matchesTab = activeTab === 'all' || (!!tabDef && tabDef.statuses.includes(d.status))
         return matchesSearch && matchesTab
     })
 
     const counts = {
         all: documents.length,
-        identified: documents.filter(d => d.status === 'identified').length,
-        capturing: documents.filter(d => d.status === 'capturing').length,
-        inconsistencies: documents.filter(d => d.status === 'inconsistencies').length,
-        in_progress: documents.filter(d => d.status === 'in_progress').length,
-        processed: documents.filter(d => d.status === 'processed').length,
+        processing: documents.filter(d => d.status === 'identified' || d.status === 'capturing').length,
+        to_review: documents.filter(d => d.status === 'inconsistencies').length,
+        in_review: documents.filter(d => d.status === 'in_progress').length,
+        ready_to_sync: documents.filter(d => d.status === 'processed').length,
         completed: documents.filter(d => d.status === 'completed').length,
-        deprecated: deprecatedDocs.length,
+        failed: deprecatedDocs.length,
     }
 
     return (
@@ -305,16 +314,18 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                 <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 whitespace-nowrap">
                                     OCR Tracking
                                 </h3>
-                                {/* Tabs — funnel stages + Deprecated archive (separated by divider) */}
+                                {/* DE1.11 · Diego 2026-09-02 · tabs paridad gostrata.app premain ·
+                                    7 tabs sin divider · Failed antes se llamaba Deprecated y
+                                    Ingesting+Needs Attention fueron consolidados en Processing. */}
                                 <div className="flex gap-1 bg-muted p-1 rounded-lg w-fit overflow-x-auto max-w-full">
                                     {[
                                         { id: 'all', label: 'All', count: counts.all, hint: 'All documents currently in the OCR pipeline' },
-                                        { id: 'identified', label: 'Ingesting', count: counts.identified, hint: 'Newly uploaded documents being scanned and classified' },
-                                        { id: 'capturing', label: 'Needs Attention', count: counts.capturing, hint: 'Fields extracted with low confidence — manual review suggested' },
-                                        { id: 'inconsistencies', label: 'Awaiting Expert', count: counts.inconsistencies, hint: 'Inconsistencies detected — needs Expert Hub resolution' },
-                                        { id: 'in_progress', label: 'In-progress', count: counts.in_progress, hint: 'An Expert Hub member is actively resolving inconsistencies on these documents' },
-                                        { id: 'processed', label: 'Reviewed', count: counts.processed, hint: 'Reviewed by an expert · linked documents are now matched and ready to create as Orderbahn records' },
+                                        { id: 'processing', label: 'Processing', count: counts.processing, hint: 'Newly uploaded documents · OCR scan + field extraction in progress' },
+                                        { id: 'to_review', label: 'To Review', count: counts.to_review, hint: 'Inconsistencies detected — needs Expert Hub resolution' },
+                                        { id: 'in_review', label: 'In Review', count: counts.in_review, hint: 'An Expert Hub member is actively resolving inconsistencies on these documents' },
+                                        { id: 'ready_to_sync', label: 'Ready to Sync', count: counts.ready_to_sync, hint: 'Reviewed by an expert · linked documents matched and ready to create as Orderbahn records' },
                                         { id: 'completed', label: 'Completed', count: counts.completed, hint: 'Documents fully processed and turned into Orderbahn records' },
+                                        { id: 'failed', label: 'Failed', count: counts.failed, hint: 'Archived documents · no longer in the active pipeline (superseded, cancelled, duplicates, errors)' },
                                     ].map(tab => (
                                         <button
                                             key={tab.id}
@@ -338,14 +349,14 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                         onClick={() => setActiveTab('deprecated')}
                                         title="Archived documents — no longer in the active pipeline (superseded, cancelled, duplicates, etc.)"
                                         className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-2 outline-none whitespace-nowrap ${
-                                            activeTab === 'deprecated'
+                                            activeTab === 'failed'
                                                 ? 'bg-zinc-700 dark:bg-zinc-200 text-white dark:text-zinc-900 shadow-sm'
                                                 : 'text-muted-foreground hover:bg-zinc-300/40 dark:hover:bg-zinc-700/40 hover:text-foreground'
                                         }`}
                                     >
                                         Deprecated
                                         <span title={`${counts.deprecated} archived document${counts.deprecated === 1 ? '' : 's'}`} className={`text-xs px-1.5 py-0.5 rounded-full transition-colors ${
-                                            activeTab === 'deprecated' ? 'bg-white/15 dark:bg-zinc-900/15 text-white dark:text-zinc-900' : 'bg-background text-muted-foreground'
+                                            activeTab === 'failed' ? 'bg-white/15 dark:bg-zinc-900/15 text-white dark:text-zinc-900' : 'bg-background text-muted-foreground'
                                         }`}>{counts.deprecated}</span>
                                     </button>
                                 </div>
@@ -423,14 +434,6 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                     </button>
                                 </div>
 
-                                {/* DE1.10 · Diego 2026-09-02 · pill visual-only para paridad
-                                    con gostrata.app premain · sin lógica real, solo comunica
-                                    el estado de live-updates que en prod sí es interactivo. */}
-                                <div className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-foreground bg-background border border-input rounded-lg">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true" />
-                                    Live updates paused
-                                </div>
-
                                 <div className="ml-auto flex items-center gap-2">
                                     {/* View toggle */}
                                     <div className="flex items-center border border-border rounded-lg overflow-hidden">
@@ -441,6 +444,20 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                             <LayoutGrid className="h-4 w-4" />
                                         </button>
                                     </div>
+
+                                    {/* DE1.10 · Diego 2026-09-02 · pill visual-only para paridad con
+                                        gostrata.app premain · sin lógica real. DE1.11 · refinado ·
+                                        ámbar warning · pill-shape · SOLO se muestra cuando hay al
+                                        menos una card en In Review (en prod aparece únicamente
+                                        mientras un experto tiene un doc activo · significa que
+                                        los live updates están pausados para no perder contexto).
+                                        Reubicado al bloque ml-auto · justo antes del Upload button. */}
+                                    {counts.in_review > 0 && (
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-background border border-border/60 rounded-full">
+                                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
+                                            Live updates paused
+                                        </div>
+                                    )}
 
                                     {/* Upload Document — prominent lime brand button */}
                                     <button
@@ -459,7 +476,7 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                     {/* Content area inside the card */}
                     <div className="p-6">
                         {/* Deprecated archive — replaces kanban/list when active */}
-                        {activeTab === 'deprecated' && (
+                        {activeTab === 'failed' && (
                             <DeprecatedGrid
                                 docs={deprecatedDocs}
                                 onPreview={handlePreviewDeprecated}
@@ -485,10 +502,12 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                         )}
 
                         {/* Kanban View — flex horizontal scroll, fixed-width columns to match prod card width */}
-                        {activeTab !== 'deprecated' && viewMode === 'kanban' && (
+                        {activeTab !== 'failed' && viewMode === 'kanban' && (
                             <div className="flex gap-4 overflow-x-auto pb-3 -mx-2 px-2">
                                 {COLUMNS.map(column => {
-                                    const docs = filteredDocs.filter(d => d.status === column.id)
+                                    // DE1.11 · usa el array `statuses` de la columna (ej.
+                                    // Processing = identified + capturing) para paridad prod.
+                                    const docs = filteredDocs.filter(d => column.statuses.includes(d.status))
                                     return (
                                         <div key={column.id} className="space-y-3 min-w-[300px] flex-shrink-0">
                                             {/* Column Header */}
@@ -528,7 +547,7 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                         )}
 
                         {/* List View — matches prod: Document hash + line items / Vendor + type pill / Status / Review Status / Date / Actions */}
-                        {activeTab !== 'deprecated' && viewMode === 'list' && (
+                        {activeTab !== 'failed' && viewMode === 'list' && (
                             <div className="overflow-hidden rounded-xl border border-border">
                                 <table className="w-full">
                                     <thead>

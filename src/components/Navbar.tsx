@@ -38,7 +38,9 @@ export default function Navbar({ onLogout, activeTab = 'OCR', onNavigate }: Navb
     // Catalog tab removed · feature movida al repo expert-catalog.
     // Para retomar · `git checkout backup/with-catalog`.
     const tabs: { name: string; label: string; page: string; icon: any; hidden?: boolean }[] = [
-        { name: 'OCR', label: 'OCR Tracking', page: 'ocr-tracking', icon: ScanEye },
+        // DE1.11 · Diego 2026-09-02 · pill label acortado a 'OCR' para paridad
+        // con gostrata.app premain (antes decía 'OCR Tracking').
+        { name: 'OCR', label: 'OCR', page: 'ocr-tracking', icon: ScanEye },
         // DE1.5 · Diego 2026-09-02 · Transactions oculto en el demo template ·
         // no aparece en la versión premain de gostrata.app. Se mantiene el código
         // (src/Transactions.tsx + rutas en App.tsx) por si se necesita restaurar.
