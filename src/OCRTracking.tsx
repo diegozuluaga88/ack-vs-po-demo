@@ -309,8 +309,12 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                         <div className="flex flex-col gap-6">
                             {/* Top Row: Title + Tabs */}
                             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                {/* DE1.13 · Diego 2026-09-02 · section title alineado con
+                                    gostrata.app premain · el H1 del card dice "Expert Hub"
+                                    (no "OCR Tracking"). El breadcrumb superior sí conserva
+                                    "Expert Hub > OCR Tracking" como en prod. */}
                                 <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 whitespace-nowrap">
-                                    OCR Tracking
+                                    Expert Hub
                                 </h3>
                                 {/* DE1.11 · Diego 2026-09-02 · tabs paridad gostrata.app premain ·
                                     7 tabs sin divider · Failed antes se llamaba Deprecated y
