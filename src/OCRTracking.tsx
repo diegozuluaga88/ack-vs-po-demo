@@ -99,6 +99,10 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
     const [documents, setDocuments] = useState(OCR_DOCUMENTS)
     const [deprecatedDocs, setDeprecatedDocs] = useState<DeprecatedDoc[]>(DEPRECATED_DOCS)
     const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
+    // DE1.8 · Diego 2026-09-02 · date-range pills (Last 30 days / Full history)
+    // para alinear con gostrata.app premain. Visual only por ahora · sin filtro
+    // real sobre los mocks (el mock no tiene timestamps útiles para filtrar).
+    const [dateRange, setDateRange] = useState<'last-30' | 'full'>('last-30')
     const [searchQuery, setSearchQuery] = useState('')
     const [activeTab, setActiveTab] = useState<'all' | 'identified' | 'capturing' | 'inconsistencies' | 'in_progress' | 'processed' | 'completed' | 'deprecated'>('all')
     const [feedbackContext, setFeedbackContext] = useState<FeedbackContext | null>(null)
@@ -240,18 +244,22 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
     return (
         <div className="min-h-screen bg-background font-sans text-foreground pb-10">
 
-            {/* Breadcrumb hoisted above navbar — matches prod top-left position */}
-            <div className="fixed top-2 left-6 z-50 text-xs opacity-80 hover:opacity-100 transition-opacity pointer-events-auto">
-                <Breadcrumbs items={[
-                    { label: 'Expert Hub', onClick: () => onNavigate('ocr-tracking') },
-                    { label: 'OCR Tracking', active: true }
-                ]} />
-            </div>
-
             <Navbar onLogout={onLogout} activeTab="OCR" onNavigateToWorkspace={() => onNavigate('ocr-tracking')} onNavigate={onNavigate} />
 
+            {/* DE1.7 · Diego 2026-09-02 · breadcrumb movido DEBAJO del navbar,
+                dentro del content area (alineado con gostrata.app premain).
+                Antes estaba `fixed top-2 left-6 z-50` (encima del navbar). */}
+            <div className="pt-24 px-4 max-w-screen-2xl mx-auto">
+                <div className="text-xs">
+                    <Breadcrumbs items={[
+                        { label: 'Expert Hub', onClick: () => onNavigate('ocr-tracking') },
+                        { label: 'OCR Tracking', active: true }
+                    ]} />
+                </div>
+            </div>
+
             {/* Main Content — wider container to fit 8 tabs without horizontal scroll */}
-            <div className="pt-24 px-4 max-w-screen-2xl mx-auto space-y-6">
+            <div className="pt-4 px-4 max-w-screen-2xl mx-auto space-y-6">
 
                 {/* Processing Indicator */}
                 {processingDoc && (
@@ -363,6 +371,34 @@ export default function OCRTracking({ onLogout, onNavigate, onConvertDocument }:
                                             +{TEAM_MEMBERS.length - 6}
                                         </div>
                                     )}
+                                </div>
+
+                                {/* DE1.8 · date-range pills · matches gostrata.app premain */}
+                                <div className="flex items-center gap-1.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setDateRange('last-30')}
+                                        title="Show last 30 days"
+                                        className={`px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                                            dateRange === 'last-30'
+                                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                                : 'bg-background border border-input text-foreground hover:bg-muted'
+                                        }`}
+                                    >
+                                        Last 30 days
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDateRange('full')}
+                                        title="Show full history"
+                                        className={`px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                                            dateRange === 'full'
+                                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                                : 'bg-background border border-input text-foreground hover:bg-muted'
+                                        }`}
+                                    >
+                                        Full history
+                                    </button>
                                 </div>
 
                                 <div className="ml-auto flex items-center gap-2">

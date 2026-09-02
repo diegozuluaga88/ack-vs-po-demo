@@ -105,17 +105,19 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
 
     return (
         <div className="min-h-screen bg-background font-sans text-foreground pb-10">
-            {/* Breadcrumb hoisted above navbar */}
-            <div className="fixed top-2 left-6 z-50 text-xs opacity-80 hover:opacity-100 transition-opacity pointer-events-auto">
-                <Breadcrumbs items={[
-                    { label: 'Expert Hub', onClick: () => onNavigate('ocr-tracking') },
-                    { label: 'Comparisons', active: true },
-                ]} />
-            </div>
-
             <Navbar onLogout={onLogout} activeTab="Comparisons" onNavigateToWorkspace={() => onNavigate('comparisons')} onNavigate={onNavigate} />
 
-            <div className="pt-24 px-4 max-w-screen-2xl mx-auto space-y-6">
+            {/* DE1.7 · Diego 2026-09-02 · breadcrumb debajo del navbar (alineado con gostrata.app premain). */}
+            <div className="pt-24 px-4 max-w-screen-2xl mx-auto">
+                <div className="text-xs">
+                    <Breadcrumbs items={[
+                        { label: 'Expert Hub', onClick: () => onNavigate('ocr-tracking') },
+                        { label: 'Comparisons', active: true },
+                    ]} />
+                </div>
+            </div>
+
+            <div className="pt-4 px-4 max-w-screen-2xl mx-auto space-y-6">
                 <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                     {/* Header: title + funnel + search + view toggle */}
                     <div className="p-6 border-b border-border">
