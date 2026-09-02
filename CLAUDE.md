@@ -1,6 +1,6 @@
-# demo-expert-1 · Demo template · clon de expert-hub
+# ack-vs-po-demo · Demo template · clon de expert-hub
 
-**Contexto**: fork paralelo de `expert-hub` (base `1f58b0e` · 2026-08-13) para demo genérico. Adaptaciones marcadas con prefijo `DE1.*`. Ver README.md para detalles.
+**Contexto**: fork paralelo de `expert-hub` (base `1f58b0e` · 2026-08-13) para demo genérico enfocado en Ack↔PO comparisons. Nombre original `demo-expert-1` · renombrado a `ack-vs-po-demo` el 2026-09-02. Adaptaciones marcadas con prefijo histórico `DE1.*` (no renombrado para preservar trazabilidad). Ver README.md para detalles.
 
 **Regla dura**: no editar código en `src/components/comparison/*` ni el `ComparisonReviewModal` · fuente de verdad = expert-hub.
 

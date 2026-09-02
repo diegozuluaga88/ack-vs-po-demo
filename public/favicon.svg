@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Strata favicon · hexágono flat-top con 3 capas apiladas (strata = capas).
+       Uso currentColor para que respete light/dark del browser.
+       Extraído del wordmark en public/logo-light.png el 2026-09-02. -->
+  <path
+    d="M50 4 L91 27.5 L91 72.5 L50 96 L9 72.5 L9 27.5 Z"
+    fill="currentColor"
+  />
+  <!-- 3 diamantes apilados (blancos sobre hexágono negro) -->
+  <path
+    d="M50 20 L72 32 L50 44 L28 32 Z"
+    fill="white"
+  />
+  <path
+    d="M50 44 L72 56 L50 68 L28 56 Z"
+    fill="white"
+    opacity="0.4"
+  />
+  <path
+    d="M50 44 L72 56 L50 68 L28 56 Z"
+    fill="none"
+    stroke="white"
+    stroke-width="4"
+  />
+  <path
+    d="M50 68 L72 80 L50 92 L28 80 Z"
+    fill="none"
+    stroke="white"
+    stroke-width="4"
+  />
+</svg>
