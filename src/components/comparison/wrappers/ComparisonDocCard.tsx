@@ -36,6 +36,9 @@ interface Props {
     onPreview?: () => void
     onDelete?: () => void
     onSend?: () => void
+    // DE1.19 · Diego 2026-09-03 · default true · pasar false para ocultar
+    // el botón Compare (ej. cards Purchase Orders donde el flujo aún no aplica).
+    showCompare?: boolean
 }
 
 function formatRelativeTime(input: string): string {
@@ -55,7 +58,7 @@ function formatRelativeTime(input: string): string {
     return input
 }
 
-export default function ComparisonDocCard({ doc, onCompare, onPreview, onDelete, onSend }: Props) {
+export default function ComparisonDocCard({ doc, onCompare, onPreview, onDelete, onSend, showCompare = true }: Props) {
     const isReviewed = doc.reviewStatus === 'Reviewed'
     const hasCounterpart = !!doc.relatedPo
 
@@ -122,8 +125,10 @@ export default function ComparisonDocCard({ doc, onCompare, onPreview, onDelete,
                         >
                             <FileText className="h-4 w-4" />
                         </button>
-                        {/* Compare · NUEVO icono de acción · abre ComparisonReviewModal */}
-                        {hasCounterpart && (
+                        {/* Compare · NUEVO icono de acción · abre ComparisonReviewModal.
+                            DE1.19 · Diego 2026-09-03 · gated por `showCompare` para
+                            ocultarlo en cards PO (por ahora el flujo va desde ACK). */}
+                        {showCompare && hasCounterpart && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onCompare() }}
                                 title="Compare PO ↔ ACK"

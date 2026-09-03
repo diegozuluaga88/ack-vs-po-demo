@@ -99,9 +99,10 @@ function statusClasses(s: CompareStatus): string {
 }
 
 export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) {
-    // DE1.18 · Diego 2026-09-02 · default 'po' · match prod que muestra
-    // Purchase Orders como tab activa al cargar.
-    const [activeTab, setActiveTab] = useState<'po' | 'ack'>('po')
+    // DE1.19 · Diego 2026-09-03 · default 'ack' (era 'po') · en el flow
+    // del demo el usuario arranca revisando Acknowledgements (donde vive
+    // el botón Compare) · la tab PO existe pero por ahora sin acción compare.
+    const [activeTab, setActiveTab] = useState<'po' | 'ack'>('ack')
     const [query, setQuery] = useState('')
     // DE1.4 · Diego 2026-09-02 · list como default (era 'grid')
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
@@ -223,6 +224,9 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
                                         onPreview={() => addToast('info', `Preview ${d.id} (stub)`)}
                                         onDelete={() => addToast('info', `Delete ${d.id} (stub)`)}
                                         onSend={() => addToast('info', `Send ${d.id} (stub)`)}
+                                        // DE1.19 · Diego 2026-09-03 · Compare solo en cards ACK
+                                        // (por ahora no en PO · el flujo se dispara desde ACK).
+                                        showCompare={d.type === 'Acknowledgment'}
                                     />
                                 ))}
                             </div>
@@ -232,7 +236,11 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-border bg-muted/30 text-left">
-                                            {['Document', 'Vendor', 'Linked PO', 'Status', 'Review Status', 'Date', 'Actions'].map(h => (
+                                            {/* DE1.20 · Diego 2026-09-03 · nueva columna "Brand" antes
+                                                de Actions · el avatar (círculo con iniciales del vendor)
+                                                se movió aquí desde el cell de Actions para separar
+                                                identidad visual del bloque de botones de acción. */}
+                                            {['Document', 'Vendor', 'Linked PO', 'Status', 'Review Status', 'Date', 'Brand', 'Actions'].map(h => (
                                                 <th key={h} className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">{h}</th>
                                             ))}
                                         </tr>
@@ -266,15 +274,26 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">{d.date}</td>
+                                                {/* DE1.20 · Diego 2026-09-03 · Brand cell · avatar separado
+                                                    del bloque Actions · antes iba mezclado con los botones. */}
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    <div title={d.vendor} className={`h-7 w-7 rounded-full bg-gradient-to-br ${avatarGradient(d.id)} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}>
+                                                        {d.initials}
+                                                    </div>
+                                                </td>
                                                 <td className="px-4 py-3 whitespace-nowrap">
                                                     <div className="flex items-center gap-1.5">
-                                                        <button
-                                                            onClick={() => openCompare(d)}
-                                                            title="Compare with PO"
-                                                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-md bg-brand-300/30 text-foreground border border-brand-300/50 hover:bg-brand-300/50 dark:bg-brand-500/15 dark:border-brand-500/40 dark:hover:bg-brand-500/25 transition-colors"
-                                                        >
-                                                            <GitCompare className="h-3.5 w-3.5" /> Compare
-                                                        </button>
+                                                        {/* DE1.19 · Diego 2026-09-03 · Compare solo en filas ACK
+                                                            (por ahora no en PO · el flujo se dispara desde ACK). */}
+                                                        {d.type === 'Acknowledgment' && (
+                                                            <button
+                                                                onClick={() => openCompare(d)}
+                                                                title="Compare with PO"
+                                                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-md bg-brand-300/30 text-foreground border border-brand-300/50 hover:bg-brand-300/50 dark:bg-brand-500/15 dark:border-brand-500/40 dark:hover:bg-brand-500/25 transition-colors"
+                                                            >
+                                                                <GitCompare className="h-3.5 w-3.5" /> Compare
+                                                            </button>
+                                                        )}
                                                         <button onClick={() => setIsReconciliationOpen(true)} title="Reconcile PO vs ACK" className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                                                             <FileSearch className="h-4 w-4" />
                                                         </button>
@@ -283,9 +302,6 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
                                                                 <AlertTriangle className="h-4 w-4" />
                                                             </button>
                                                         )}
-                                                        <div title={d.vendor} className={`h-7 w-7 rounded-full bg-gradient-to-br ${avatarGradient(d.id)} flex items-center justify-center text-white text-[10px] font-bold shrink-0 ml-1`}>
-                                                            {d.initials}
-                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
