@@ -134,14 +134,15 @@ export default function ComparisonDocCard({ doc, onCompare, onPreview, onDelete,
                             <FileText className="h-4 w-4" />
                         </button>
                         {/* Compare · NUEVO icono de acción · abre ComparisonReviewModal.
-                            DE1.19 · Diego 2026-09-03 · gated por `showCompare` para
-                            ocultarlo en cards PO (por ahora el flujo va desde ACK). */}
+                            DE1.19 · gated por `showCompare` (oculto en cards PO por ahora).
+                            DE1.24 · Diego 2026-09-03 · color brand-lime (DS · brand-300/500)
+                            para diferenciarlo del resto · acción "hero" de Comparisons. */}
                         {showCompare && hasCounterpart && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onCompare() }}
                                 title="Compare PO ↔ ACK"
                                 aria-label="Compare against linked counterpart"
-                                className="p-1.5 rounded-md text-green-600 bg-green-50 dark:text-green-300 dark:bg-green-500/15 hover:brightness-95 transition-all"
+                                className="p-1.5 rounded-md bg-brand-300/30 text-foreground border border-brand-300/50 hover:bg-brand-300/50 dark:bg-brand-500/15 dark:border-brand-500/40 dark:hover:bg-brand-500/25 transition-colors"
                             >
                                 <GitCompare className="h-4 w-4" />
                             </button>

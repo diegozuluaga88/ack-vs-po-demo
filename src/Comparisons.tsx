@@ -110,8 +110,11 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
     // el botón Compare) · la tab PO existe pero por ahora sin acción compare.
     const [activeTab, setActiveTab] = useState<'po' | 'ack'>('ack')
     const [query, setQuery] = useState('')
-    // DE1.4 · Diego 2026-09-02 · list como default (era 'grid')
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
+    // DE1.4 · Diego 2026-09-02 · list como default (era 'grid').
+    // DE1.25 · Diego 2026-09-03 · revert · card (grid) de vuelta como default
+    // en Comparisons · las cards con layout OCR-style (DE1.18) son ahora
+    // la vista primaria para paridad visual con prod.
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
     const { toasts, addToast, dismissToast } = useToast()
 
     const [compareDoc, setCompareDoc] = useState<ComparisonDoc | null>(null)
@@ -281,35 +284,45 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">{d.date}</td>
                                                 <td className="px-4 py-3 whitespace-nowrap">
-                                                    <div className="flex items-center gap-1.5">
-                                                        {/* DE1.19 · Diego 2026-09-03 · Compare solo en filas ACK
-                                                            (por ahora no en PO · el flujo se dispara desde ACK). */}
-                                                        {d.type === 'Acknowledgment' && (
-                                                            <button
-                                                                onClick={() => openCompare(d)}
-                                                                title="Compare with PO"
-                                                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-md bg-brand-300/30 text-foreground border border-brand-300/50 hover:bg-brand-300/50 dark:bg-brand-500/15 dark:border-brand-500/40 dark:hover:bg-brand-500/25 transition-colors"
-                                                            >
-                                                                <GitCompare className="h-3.5 w-3.5" /> Compare
+                                                    {/* DE1.23 · Diego 2026-09-03 · flex + justify-between separa el
+                                                        grupo de iconos de acción (izquierda) del avatar del reviewer
+                                                        (derecha) · así el avatar queda siempre alineado al edge del
+                                                        cell independientemente del número de acciones que la fila
+                                                        tenga (ej. warning solo si Discrepancy). Antes la columna se
+                                                        desalineaba porque el avatar iba pegado a los iconos. */}
+                                                    <div className="flex items-center justify-between gap-1.5">
+                                                        <div className="flex items-center gap-1.5">
+                                                            {/* DE1.19 · Compare solo en filas ACK (flujo se dispara desde ACK).
+                                                                DE1.22 · texto "Compare" removido · queda solo el icon-button.
+                                                                DE1.24 · Diego 2026-09-03 · color brand-lime (DS · brand-300/500)
+                                                                para diferenciarlo del resto de acciones · es la acción "hero"
+                                                                de la sección Comparisons. */}
+                                                            {d.type === 'Acknowledgment' && (
+                                                                <button
+                                                                    onClick={() => openCompare(d)}
+                                                                    title="Compare with PO"
+                                                                    aria-label="Compare with PO"
+                                                                    className="p-1.5 rounded-md bg-brand-300/30 text-foreground border border-brand-300/50 hover:bg-brand-300/50 dark:bg-brand-500/15 dark:border-brand-500/40 dark:hover:bg-brand-500/25 transition-colors"
+                                                                >
+                                                                    <GitCompare className="h-4 w-4" />
+                                                                </button>
+                                                            )}
+                                                            <button onClick={() => setIsReconciliationOpen(true)} title="Reconcile PO vs ACK" className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                                                                <FileSearch className="h-4 w-4" />
                                                             </button>
-                                                        )}
-                                                        <button onClick={() => setIsReconciliationOpen(true)} title="Reconcile PO vs ACK" className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                                                            <FileSearch className="h-4 w-4" />
-                                                        </button>
-                                                        {d.status === 'Discrepancy' && (
-                                                            <button onClick={() => openResolve(d)} title="Resolve discrepancies" className="p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/15 transition-colors">
-                                                                <AlertTriangle className="h-4 w-4" />
-                                                            </button>
-                                                        )}
-                                                        {/* DE1.21 · Diego 2026-09-03 · avatar del reviewer asignado
-                                                            (persona · match prod). Reusa TEAM_MEMBERS · fallback
-                                                            a 'me' (Diego Zuluaga · DZ) si no hay assigneeId. */}
+                                                            {d.status === 'Discrepancy' && (
+                                                                <button onClick={() => openResolve(d)} title="Resolve discrepancies" className="p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/15 transition-colors">
+                                                                    <AlertTriangle className="h-4 w-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        {/* DE1.21 · avatar reviewer · match prod. Reusa TEAM_MEMBERS · fallback 'me'. */}
                                                         {(() => {
                                                             const reviewer = getTeamMember(d.assigneeId ?? CURRENT_USER_ID) ?? getTeamMember(CURRENT_USER_ID)!
                                                             return (
                                                                 <div
                                                                     title={`Assigned to ${reviewer.name}`}
-                                                                    className={`h-7 w-7 rounded-full bg-gradient-to-br ${avatarGradient(reviewer.id)} flex items-center justify-center text-white text-[10px] font-bold shrink-0 ml-1`}
+                                                                    className={`h-7 w-7 rounded-full bg-gradient-to-br ${avatarGradient(reviewer.id)} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}
                                                                 >
                                                                     {reviewer.initials}
                                                                 </div>

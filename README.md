@@ -33,6 +33,10 @@ Todas las adaptaciones llevan comentario prefijo `DE1.*` para trazabilidad (el p
 | DE1.19 | Tab por defecto en Comparisons ahora es **Acknowledgements** (era Purchase Orders). Botón "Compare" solo visible en cards/rows type=Acknowledgment (por ahora no en PO · el flujo se dispara desde ACK). Nueva prop `showCompare` en `ComparisonDocCard` | `src/Comparisons.tsx` · `src/components/comparison/wrappers/ComparisonDocCard.tsx` |
 | DE1.20 | List view de Comparisons · nueva columna **Brand** (avatar circular con iniciales del vendor) separada del cell Actions · antes iban mezclados | `src/Comparisons.tsx` |
 | DE1.21 | Revert DE1.20 tras revisar prod · el avatar vuelve al cell Actions (sin título de columna, como en gostrata.app premain) · representa el **reviewer asignado** (persona) no la marca del vendor · tooltip "Assigned to <name>" · nuevo campo `assigneeId` en `ComparisonDoc` con distribución entre team members (me/carlos/daniela/christian/jennifer) · aplicado tanto en list como en grid card | `src/Comparisons.tsx` · `src/components/comparison/wrappers/ComparisonDocCard.tsx` |
+| DE1.22 | Compare button en list view · texto "Compare" removido · queda solo icon-button (paridad visual con las otras acciones) | `src/Comparisons.tsx` |
+| DE1.23 | List view · Actions cell usa `justify-between` para separar el grupo de iconos de acción (izq) del avatar del reviewer (derecha) · el avatar queda siempre alineado al edge del cell aunque una fila tenga icon extra (ej. warning en Discrepancy) | `src/Comparisons.tsx` |
+| DE1.24 | Compare button · color brand-lime (DS · `bg-brand-300/30` + `border-brand-300/50` · dark variant `brand-500/15`) · diferencia la acción "hero" de Comparisons del resto · aplicado en list view y grid card | `src/Comparisons.tsx` · `src/components/comparison/wrappers/ComparisonDocCard.tsx` |
+| DE1.25 | Default view mode de Comparisons revertido a `grid` (era `list` desde DE1.4) · las cards con layout OCR-style son ahora la vista primaria | `src/Comparisons.tsx` |
 
 Todo lo demás viene tal cual de `expert-hub@1f58b0e`.
 
