@@ -38,6 +38,7 @@ Todas las adaptaciones llevan comentario prefijo `DE1.*` para trazabilidad (el p
 | DE1.24 | Compare button · color brand-lime (DS · `bg-brand-300/30` + `border-brand-300/50` · dark variant `brand-500/15`) · diferencia la acción "hero" de Comparisons del resto · aplicado en list view y grid card | `src/Comparisons.tsx` · `src/components/comparison/wrappers/ComparisonDocCard.tsx` |
 | DE1.25 | Default view mode de Comparisons revertido a `grid` (era `list` desde DE1.4) · las cards con layout OCR-style son ahora la vista primaria | `src/Comparisons.tsx` |
 | DE1.26 | Icono `GitCompare` removido del H3 title de Comparisons · violaba la regla DS "brand color solo como background, nunca como texto/icono" (usaba `text-primary`) y no era legible · match prod que no muestra icono al lado del title | `src/Comparisons.tsx` |
+| DE1.27 | Favicon oficial Strata (copiado de `demo-2026-strata/public/`) · patrón dual `prefers-color-scheme` (light → `strata-round-black-favicon.svg` · dark → `strata-white-favicon.svg`). Removido el `favicon.svg` custom que Diego dijo "no coincide con el de Strata" | `index.html` · `public/strata-*-favicon.svg` (nuevos) · `public/favicon.svg` (eliminado) |
 
 Todo lo demás viene tal cual de `expert-hub@1f58b0e`.
 
