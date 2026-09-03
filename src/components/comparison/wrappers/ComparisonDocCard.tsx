@@ -10,7 +10,7 @@
 
 import { FileText, CheckCircle2, AlertCircle, GitCompare, Send, Trash2 } from 'lucide-react'
 import DocTypeChip from '../../ocr/DocTypeChip'
-import { avatarGradient } from '../../team/teamMembers'
+import { avatarGradient, getTeamMember, CURRENT_USER_ID } from '../../team/teamMembers'
 
 export type CompareDocType = 'Purchase Order' | 'Acknowledgment'
 export type CompareReviewStatus = 'Reviewed' | 'Pending For Review'
@@ -28,6 +28,9 @@ export interface ComparisonCardData {
     subCode?: string
     /** Counterpart doc · presencia habilita el botón compare + el plane. */
     relatedPo?: string
+    // DE1.21 · Diego 2026-09-03 · reviewer asignado · el avatar muestra
+    // sus iniciales · fallback 'me' (Diego Zuluaga).
+    assigneeId?: string
 }
 
 interface Props {
@@ -61,6 +64,8 @@ function formatRelativeTime(input: string): string {
 export default function ComparisonDocCard({ doc, onCompare, onPreview, onDelete, onSend, showCompare = true }: Props) {
     const isReviewed = doc.reviewStatus === 'Reviewed'
     const hasCounterpart = !!doc.relatedPo
+    // DE1.21 · Diego 2026-09-03 · avatar del reviewer (persona), no vendor.
+    const reviewer = getTeamMember(doc.assigneeId ?? CURRENT_USER_ID) ?? getTeamMember(CURRENT_USER_ID)!
 
     return (
         <div className="group bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
@@ -78,11 +83,14 @@ export default function ComparisonDocCard({ doc, onCompare, onPreview, onDelete,
                             <div className="text-[11px] text-muted-foreground font-mono truncate">{doc.subCode ?? doc.id}</div>
                         </div>
                     </div>
+                    {/* DE1.21 · avatar del reviewer asignado (persona · match prod
+                        tooltip "Assigned to <name>") · antes mostraba iniciales del
+                        vendor confundiendo con la marca. */}
                     <div
-                        title={doc.vendor}
-                        className={`h-7 w-7 rounded-full bg-gradient-to-br ${avatarGradient(doc.id)} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}
+                        title={`Assigned to ${reviewer.name}`}
+                        className={`h-7 w-7 rounded-full bg-gradient-to-br ${avatarGradient(reviewer.id)} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}
                     >
-                        {doc.initials}
+                        {reviewer.initials}
                     </div>
                 </div>
 

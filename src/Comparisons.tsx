@@ -3,7 +3,7 @@ import { Search, List, LayoutGrid, FileText, GitCompare, CheckCircle2, AlertTria
 import Navbar from './components/Navbar'
 import Breadcrumbs from './components/Breadcrumbs'
 import DocTypeChip from './components/ocr/DocTypeChip'
-import { avatarGradient } from './components/team/teamMembers'
+import { avatarGradient, getTeamMember, CURRENT_USER_ID } from './components/team/teamMembers'
 import { ToastContainer, useToast } from './components/AuthToast'
 import ComparisonLauncher from './components/comparison/ComparisonLauncher'
 // DE1.18 · Diego 2026-09-02 · card local con layout OCR-style para paridad
@@ -32,6 +32,10 @@ interface ComparisonDoc {
     name: string
     // DE1.18 · sub-code opcional debajo del vendor (ej. "KT2131.001.01").
     subCode?: string
+    // DE1.21 · Diego 2026-09-03 · assignee (persona que revisa) · el círculo
+    // en Actions muestra las iniciales de este user, NO las del vendor.
+    // Default 'me' (Diego Zuluaga) si no se especifica.
+    assigneeId?: string
     /** DE1.3 · Diego 2026-09-01 · optional para modelar ACKs huérfanos
      *  (llegaron del vendor pero el PO nunca se emitió). Los huérfanos
      *  se ocultan del listado por la regla del demo (ver COMPARISON_DOCS). */
@@ -58,21 +62,23 @@ interface ComparisonDoc {
 // tenían `relatedPo: PO-2026-*` ahora también tienen entries PO-2026-*
 // standalone visibles bajo la tab PO).
 const COMPARISON_DOCS_ALL: ComparisonDoc[] = [
+    // DE1.21 · assigneeId distribuye reviewers entre miembros del team ·
+    // por default 'me' (Diego Zuluaga) · el resto usa ids del TEAM_MEMBERS.
     // ── Acknowledgements ────────────────────────────────────────────────
-    { id: 'ACK-8840', vendor: 'Steelcase', type: 'Acknowledgment', name: 'ACK-8840_Steelcase.pdf', relatedPo: 'PO-2026-002', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'Jan 13, 2026', initials: 'SC', lineItems: 50 },
-    { id: 'ACK-8841', vendor: 'Knoll', type: 'Acknowledgment', name: 'ACK-8841_Knoll.pdf', relatedPo: 'PO-2026-003', status: 'Pending', reviewStatus: 'Pending For Review', date: 'Jan 12, 2026', initials: 'KN', lineItems: 12 },
-    { id: 'ACK-8842', vendor: 'AIS Furniture', type: 'Acknowledgment', name: 'ACK-8842_AIS.pdf', relatedPo: 'PO-2026-004', status: 'Pending', reviewStatus: 'Pending For Review', date: 'Jan 15, 2026', initials: 'AI', lineItems: 6 },
-    { id: 'ACK-8839', vendor: 'Herman Miller', type: 'Acknowledgment', name: 'ACK-8839_HermanMiller.pdf', relatedPo: 'PO-2026-001', status: 'Reviewed', reviewStatus: 'Reviewed', date: 'Jan 14, 2026', initials: 'HM', lineItems: 8 },
-    { id: 'ACK-330357', vendor: 'ergotron', type: 'Acknowledgment', name: 'ACK-330357_ergotron.pdf', relatedPo: 'PO-330357', status: 'Reviewed', reviewStatus: 'Reviewed', date: '21 days ago', initials: 'EG', lineItems: 3 },
-    { id: 'ACK-7855', vendor: 'Knoll', type: 'Acknowledgment', name: 'ACK-7855_Knoll.pdf', relatedPo: 'PO-4501', status: 'Pending', reviewStatus: 'Pending For Review', date: '5 days ago', initials: 'KN', lineItems: 3 },
-    { id: 'ACK-7839', vendor: 'Steelcase', type: 'Acknowledgment', name: 'ACK-7839_Steelcase.pdf', relatedPo: 'PO-1027', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'today', initials: 'SC', lineItems: 4 },
-    { id: 'ACK-9001', vendor: 'OFS Brands', type: 'Acknowledgment', name: 'ACK-9001_OFS.pdf', relatedPo: 'PO-7741', status: 'Completed', reviewStatus: 'Reviewed', date: '14 days ago', initials: 'OF', lineItems: 2 },
+    { id: 'ACK-8840', vendor: 'Steelcase', type: 'Acknowledgment', name: 'ACK-8840_Steelcase.pdf', relatedPo: 'PO-2026-002', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'Jan 13, 2026', initials: 'SC', lineItems: 50, assigneeId: 'me' },
+    { id: 'ACK-8841', vendor: 'Knoll', type: 'Acknowledgment', name: 'ACK-8841_Knoll.pdf', relatedPo: 'PO-2026-003', status: 'Pending', reviewStatus: 'Pending For Review', date: 'Jan 12, 2026', initials: 'KN', lineItems: 12, assigneeId: 'carlos' },
+    { id: 'ACK-8842', vendor: 'AIS Furniture', type: 'Acknowledgment', name: 'ACK-8842_AIS.pdf', relatedPo: 'PO-2026-004', status: 'Pending', reviewStatus: 'Pending For Review', date: 'Jan 15, 2026', initials: 'AI', lineItems: 6, assigneeId: 'daniela' },
+    { id: 'ACK-8839', vendor: 'Herman Miller', type: 'Acknowledgment', name: 'ACK-8839_HermanMiller.pdf', relatedPo: 'PO-2026-001', status: 'Reviewed', reviewStatus: 'Reviewed', date: 'Jan 14, 2026', initials: 'HM', lineItems: 8, assigneeId: 'me' },
+    { id: 'ACK-330357', vendor: 'ergotron', type: 'Acknowledgment', name: 'ACK-330357_ergotron.pdf', relatedPo: 'PO-330357', status: 'Reviewed', reviewStatus: 'Reviewed', date: '21 days ago', initials: 'EG', lineItems: 3, assigneeId: 'christian' },
+    { id: 'ACK-7855', vendor: 'Knoll', type: 'Acknowledgment', name: 'ACK-7855_Knoll.pdf', relatedPo: 'PO-4501', status: 'Pending', reviewStatus: 'Pending For Review', date: '5 days ago', initials: 'KN', lineItems: 3, assigneeId: 'jennifer' },
+    { id: 'ACK-7839', vendor: 'Steelcase', type: 'Acknowledgment', name: 'ACK-7839_Steelcase.pdf', relatedPo: 'PO-1027', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'today', initials: 'SC', lineItems: 4, assigneeId: 'me' },
+    { id: 'ACK-9001', vendor: 'OFS Brands', type: 'Acknowledgment', name: 'ACK-9001_OFS.pdf', relatedPo: 'PO-7741', status: 'Completed', reviewStatus: 'Reviewed', date: '14 days ago', initials: 'OF', lineItems: 2, assigneeId: 'carlos' },
     // ── Purchase Orders ──────────────────────────────────────────────────
-    { id: 'PO-2026-002', vendor: 'Steelcase', type: 'Purchase Order', name: 'PO-2026-002_Steelcase.pdf', subCode: 'KT2131.001.02', relatedPo: 'ACK-8840', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'Jan 13, 2026', initials: 'SC', lineItems: 50 },
-    { id: 'PO-2026-003', vendor: 'Knoll', type: 'Purchase Order', name: 'PO-2026-003_Knoll.pdf', subCode: 'KT2131.001.03', relatedPo: 'ACK-8841', status: 'Pending', reviewStatus: 'Pending For Review', date: 'Jan 12, 2026', initials: 'KN', lineItems: 12 },
-    { id: 'PO-2026-001', vendor: 'Herman Miller', type: 'Purchase Order', name: 'PO-2026-001_HermanMiller.pdf', subCode: 'KT2131.001.01', relatedPo: 'ACK-8839', status: 'Reviewed', reviewStatus: 'Reviewed', date: 'Jan 14, 2026', initials: 'HM', lineItems: 8 },
-    { id: 'PO-1027', vendor: 'Steelcase', type: 'Purchase Order', name: 'PO-1027_Steelcase.pdf', relatedPo: 'ACK-7839', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'today', initials: 'SC', lineItems: 4 },
-    { id: 'PO-7741', vendor: 'OFS Brands', type: 'Purchase Order', name: 'PO-7741_OFS.pdf', relatedPo: 'ACK-9001', status: 'Completed', reviewStatus: 'Reviewed', date: '14 days ago', initials: 'OF', lineItems: 2 },
+    { id: 'PO-2026-002', vendor: 'Steelcase', type: 'Purchase Order', name: 'PO-2026-002_Steelcase.pdf', subCode: 'KT2131.001.02', relatedPo: 'ACK-8840', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'Jan 13, 2026', initials: 'SC', lineItems: 50, assigneeId: 'me' },
+    { id: 'PO-2026-003', vendor: 'Knoll', type: 'Purchase Order', name: 'PO-2026-003_Knoll.pdf', subCode: 'KT2131.001.03', relatedPo: 'ACK-8841', status: 'Pending', reviewStatus: 'Pending For Review', date: 'Jan 12, 2026', initials: 'KN', lineItems: 12, assigneeId: 'daniela' },
+    { id: 'PO-2026-001', vendor: 'Herman Miller', type: 'Purchase Order', name: 'PO-2026-001_HermanMiller.pdf', subCode: 'KT2131.001.01', relatedPo: 'ACK-8839', status: 'Reviewed', reviewStatus: 'Reviewed', date: 'Jan 14, 2026', initials: 'HM', lineItems: 8, assigneeId: 'me' },
+    { id: 'PO-1027', vendor: 'Steelcase', type: 'Purchase Order', name: 'PO-1027_Steelcase.pdf', relatedPo: 'ACK-7839', status: 'Discrepancy', reviewStatus: 'Pending For Review', date: 'today', initials: 'SC', lineItems: 4, assigneeId: 'christian' },
+    { id: 'PO-7741', vendor: 'OFS Brands', type: 'Purchase Order', name: 'PO-7741_OFS.pdf', relatedPo: 'ACK-9001', status: 'Completed', reviewStatus: 'Reviewed', date: '14 days ago', initials: 'OF', lineItems: 2, assigneeId: 'jennifer' },
     // DE1.3 · huérfanos (sin PO) · deben quedar ocultos
     { id: 'ACK-8845', vendor: 'AIS Furniture', type: 'Acknowledgment', name: 'ACK-8845_AIS.pdf', status: 'Pending', reviewStatus: 'Pending For Review', date: 'today', initials: 'AI', lineItems: 4 },
     { id: 'ACK-9022', vendor: 'Herman Miller', type: 'Acknowledgment', name: 'ACK-9022_HermanMiller.pdf', status: 'Pending', reviewStatus: 'Pending For Review', date: 'yesterday', initials: 'HM', lineItems: 7 },
@@ -236,11 +242,11 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-border bg-muted/30 text-left">
-                                            {/* DE1.20 · Diego 2026-09-03 · nueva columna "Brand" antes
-                                                de Actions · el avatar (círculo con iniciales del vendor)
-                                                se movió aquí desde el cell de Actions para separar
-                                                identidad visual del bloque de botones de acción. */}
-                                            {['Document', 'Vendor', 'Linked PO', 'Status', 'Review Status', 'Date', 'Brand', 'Actions'].map(h => (
+                                            {/* DE1.21 · Diego 2026-09-03 · revert DE1.20 · columna Brand
+                                                eliminada · el avatar vuelve al cell Actions (como en
+                                                prod) · representa el reviewer asignado (persona), no
+                                                la marca del vendor. Sin título de columna. */}
+                                            {['Document', 'Vendor', 'Linked PO', 'Status', 'Review Status', 'Date', 'Actions'].map(h => (
                                                 <th key={h} className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">{h}</th>
                                             ))}
                                         </tr>
@@ -274,13 +280,6 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">{d.date}</td>
-                                                {/* DE1.20 · Diego 2026-09-03 · Brand cell · avatar separado
-                                                    del bloque Actions · antes iba mezclado con los botones. */}
-                                                <td className="px-4 py-3 whitespace-nowrap">
-                                                    <div title={d.vendor} className={`h-7 w-7 rounded-full bg-gradient-to-br ${avatarGradient(d.id)} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}>
-                                                        {d.initials}
-                                                    </div>
-                                                </td>
                                                 <td className="px-4 py-3 whitespace-nowrap">
                                                     <div className="flex items-center gap-1.5">
                                                         {/* DE1.19 · Diego 2026-09-03 · Compare solo en filas ACK
@@ -302,6 +301,20 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
                                                                 <AlertTriangle className="h-4 w-4" />
                                                             </button>
                                                         )}
+                                                        {/* DE1.21 · Diego 2026-09-03 · avatar del reviewer asignado
+                                                            (persona · match prod). Reusa TEAM_MEMBERS · fallback
+                                                            a 'me' (Diego Zuluaga · DZ) si no hay assigneeId. */}
+                                                        {(() => {
+                                                            const reviewer = getTeamMember(d.assigneeId ?? CURRENT_USER_ID) ?? getTeamMember(CURRENT_USER_ID)!
+                                                            return (
+                                                                <div
+                                                                    title={`Assigned to ${reviewer.name}`}
+                                                                    className={`h-7 w-7 rounded-full bg-gradient-to-br ${avatarGradient(reviewer.id)} flex items-center justify-center text-white text-[10px] font-bold shrink-0 ml-1`}
+                                                                >
+                                                                    {reviewer.initials}
+                                                                </div>
+                                                            )
+                                                        })()}
                                                     </div>
                                                 </td>
                                             </tr>
