@@ -163,8 +163,11 @@ export default function Comparisons({ onLogout, onNavigate }: ComparisonsProps) 
                     <div className="p-6 border-b border-border">
                         <div className="flex flex-col gap-6">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 whitespace-nowrap">
-                                    <GitCompare className="h-5 w-5 text-primary" />
+                                {/* DE1.26 · Diego 2026-09-03 · icono GitCompare removido del
+                                    title · violaba la regla DS de "brand color solo como
+                                    background, nunca como texto/icono" y no era legible.
+                                    Match prod (gostrata.app premain) que no muestra icono. */}
+                                <h3 className="text-lg font-semibold text-foreground whitespace-nowrap">
                                     Comparisons
                                 </h3>
                                 <div className="flex gap-1 bg-muted p-1 rounded-lg w-fit overflow-x-auto max-w-full">

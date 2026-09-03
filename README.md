@@ -37,6 +37,7 @@ Todas las adaptaciones llevan comentario prefijo `DE1.*` para trazabilidad (el p
 | DE1.23 | List view · Actions cell usa `justify-between` para separar el grupo de iconos de acción (izq) del avatar del reviewer (derecha) · el avatar queda siempre alineado al edge del cell aunque una fila tenga icon extra (ej. warning en Discrepancy) | `src/Comparisons.tsx` |
 | DE1.24 | Compare button · color brand-lime (DS · `bg-brand-300/30` + `border-brand-300/50` · dark variant `brand-500/15`) · diferencia la acción "hero" de Comparisons del resto · aplicado en list view y grid card | `src/Comparisons.tsx` · `src/components/comparison/wrappers/ComparisonDocCard.tsx` |
 | DE1.25 | Default view mode de Comparisons revertido a `grid` (era `list` desde DE1.4) · las cards con layout OCR-style son ahora la vista primaria | `src/Comparisons.tsx` |
+| DE1.26 | Icono `GitCompare` removido del H3 title de Comparisons · violaba la regla DS "brand color solo como background, nunca como texto/icono" (usaba `text-primary`) y no era legible · match prod que no muestra icono al lado del title | `src/Comparisons.tsx` |
 
 Todo lo demás viene tal cual de `expert-hub@1f58b0e`.
 
